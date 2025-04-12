@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo Card Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .card { border: 1px solid #000; margin: 10px; display: inline-block; padding: 10px; }
+    table { border-collapse: collapse; }
+    td { border: 1px solid #000; width: 60px; height: 60px; text-align: center; vertical-align: middle; }
+  </style>
+</head>
+<body>
+
+<h2>Bingo Card Generator</h2>
+
+<form id="bingo-form">
+  <label>Title: <input type="text" id="title" required /></label><br><br>
+  <label>Grid Size:
+    <select id="gridSize">
+      <option value="3">3x3</option>
+      <option value="4">4x4</option>
+      <option value="5">5x5</option>
+    </select>
+  </label><br><br>
+  <label>Inputs (one per line):<br>
+    <textarea id="inputs" rows="6" cols="30" required></textarea>
+  </label><br><br>
+  <label>Number of Cards: <input type="number" id="numCards" min="1" value="1" /></label><br><br>
+  <button type="submit">Generate Bingo Cards</button>
+</form>
+
+<br>
+<button onclick="exportPDF()">Export as PDF</button>
+
+<div id="cardsContainer"></div>
+
+<script>
+  document.getElementById('bingo-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    generateBingoCards();
+  });
+
+  function shuffle(array) {
+    return array.sort(() => Math.random() - 0.5);
+  }
+
+  function duplicateFill(inputs, size) {
+    const total = size * size;
+    let result = [...inputs];
+    let i = 2;
+
+    while (result.length < total) {
+      result = result.concat(inputs.map(inp => inp));
+      i++;
+    }
+
+    return shuffle(result).slice(0, total);
+  }
+
+  function generateCard(title, content, size) {
+    let html = `<div class="card"><h3>${title}</h3><table>`;
+    for (let i = 0; i < size; i++) {
+      html += "<tr>";
+      for (let j = 0; j < size; j++) {
+        html += `<td>${content[i * size + j]}</td>`;
+      }
+      html += "</tr>";
+    }
+    html += "</table></div>";
+    return html;
+  }
+
+  function generateBingoCards() {
+    const title = document.getElementById('title').value;
+    const size = parseInt(document.getElementById('gridSize').value);
+    const inputs = document.getElementById('inputs').value.split('\n').filter(x => x.trim());
+    const numCards = parseInt(document.getElementById('numCards').value);
+    const container = document.getElementById('cardsContainer');
+    container.innerHTML = "";
+
+    for (let i = 0; i < numCards; i++) {
+      const content = duplicateFill(inputs, size);
+      container.innerHTML += generateCard(title, content, size);
+    }
+  }
+
+  function exportPDF() {
+    const element = document.getElementById("cardsContainer");
+    html2pdf().from(element).save("bingo-cards.pdf");
+  }
+</script>
+
+</body>
+</html>
